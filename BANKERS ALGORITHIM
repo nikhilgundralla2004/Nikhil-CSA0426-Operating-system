@@ -1,0 +1,84 @@
+#include <stdio.h>
+
+#define NUM_PROCESSES 4
+#define NUM_RESOURCES 3
+
+// Claim matrix
+int claim[NUM_PROCESSES][NUM_RESOURCES] = {
+    {3, 2, 2},
+    {6, 1, 3},
+    {3, 1, 4},
+    {4, 2, 2}
+};
+
+// Allocation matrix
+int allocation[NUM_PROCESSES][NUM_RESOURCES] = {
+    {1, 0, 0},
+    {6, 1, 2},
+    {2, 1, 1},
+    {0, 0, 2}
+};
+
+// Resource vector
+int available[NUM_RESOURCES] = {9, 3, 6};
+
+// Work and finish arrays for the banker's algorithm
+int work[NUM_RESOURCES];
+int finish[NUM_PROCESSES];
+
+// Function to check if the system is in a safe state
+int is_safe_state() {
+    int i, j, k;
+    
+    // Initialize work and finish arrays
+    for (i = 0; i < NUM_RESOURCES; i++) {
+        work[i] = available[i];
+    }
+    for (i = 0; i < NUM_PROCESSES; i++) {
+        finish[i] = 0;
+    }
+    
+    // Loop through processes until all are finished or no more can be finished
+    int finished_count = 0;
+    while (finished_count < NUM_PROCESSES) {
+        int can_finish = 0;
+        for (i = 0; i < NUM_PROCESSES; i++) {
+            if (!finish[i]) {
+                int can_allocate = 1;
+                for (j = 0; j < NUM_RESOURCES; j++) {
+                    if (claim[i][j] - allocation[i][j] > work[j]) {
+                        can_allocate = 0;
+                        break;
+                    }
+                }
+                if (can_allocate) {
+                    can_finish = 1;
+                    finish[i] = 1;
+                    for (j = 0; j < NUM_RESOURCES; j++) {
+                        work[j] += allocation[i][j];
+                    }
+                }
+            }
+        }
+        if (!can_finish) {
+            return 0;
+        }
+        finished_count = 0;
+        for (k = 0; k < NUM_PROCESSES; k++) {
+            if (finish[k]) {
+                finished_count++;
+            }
+        }
+    }
+    
+    return 1;
+}
+
+int main() {
+    if (is_safe_state()) {
+        printf("System is in safe state.\n");
+    } else {
+        printf("System is in unsafe state.\n");
+    }
+    return 0;
+}
