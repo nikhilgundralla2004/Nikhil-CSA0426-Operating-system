@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define N 4
+
+int main() {
+    int burst_times[N] = {6, 8, 7, 3};
+    int priorities[N] = {2, 1, 4, 3};
+    int remaining_burst_time[N];
+    int waiting_time[N] = {0};
+    int turnaround_time[N] = {0};
+    bool completed[N] = {false};
+    int current_time = 0;
+    int highest_priority_index = -1;
+    int completed_jobs = 0;
+    // Initialize the remaining burst time for each process
+    for (int i = 0; i < N; i++) {
+        remaining_burst_time[i] = burst_times[i];
+    }
+    // Loop until all processes are completed
+    while (completed_jobs < N) {
+        // Find the process with the highest priority
+        highest_priority_index = -1;
+        for (int i = 0; i < N; i++) {
+            if (!completed[i] && (highest_priority_index == -1 || priorities[i] < priorities[highest_priority_index])) {
+                highest_priority_index = i;
+            }
+        }
+        // Update the waiting time for all non-completed processes
+        for (int i = 0; i < N; i++) {
+            if (!completed[i] && i != highest_priority_index) {
+                waiting_time[i]++;
+            }
+        }
+        // Execute the process with the highest priority for one time unit
+        remaining_burst_time[highest_priority_index]--;
+        current_time++;
+        // If the process with the highest priority is completed, update its turnaround time
+        if (remaining_burst_time[highest_priority_index] == 0) {
+            completed_jobs++;
+            completed[highest_priority_index] = true;
+            turnaround_time[highest_priority_index] = current_time - burst_times[highest_priority_index];
+        }
+    }
+    // Calculate the average waiting and turnaround times
+    float avg_waiting_time = 0, avg_turnaround_time = 0;
+    for (int i = 0; i < N; i++) {
+        avg_waiting_time += waiting_time[i];
+        avg_turnaround_time += turnaround_time[i];
+    }
+    avg_waiting_time /= N;
+    avg_turnaround_time /= N;
+    // Print the results
+    printf("Average Waiting Time: %.2f\n", avg_waiting_time);
+    printf("Average Turnaround Time: %.2f\n", avg_turnaround_time);
+    return 0;
+}
