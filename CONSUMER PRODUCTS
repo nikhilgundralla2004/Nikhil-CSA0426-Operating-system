@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+#define BUFFER_SIZE 3
+
+int buffer[BUFFER_SIZE];
+int count = 0;
+int in = 0;
+int out = 0;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t full = PTHREAD_COND_INITIALIZER;
+pthread_cond_t empty = PTHREAD_COND_INITIALIZER;
+
+void *producer(void *param);
+void *consumer(void *param);
+
+int main(int argc, char *argv[]) {
+    pthread_t tid[2];
+    pthread_attr_t attr;
+
+    pthread_attr_init(&attr);
+
+    pthread_create(&tid[0], &attr, producer, NULL);
+    pthread_create(&tid[1], &attr, consumer, NULL);
+
+    pthread_join(tid[0], NULL);
+    pthread_join(tid[1], NULL);
+
+    return 0;
+}
+
+void *producer(void *param) {
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        pthread_mutex_lock(&mutex);
+
+        while (count == BUFFER_SIZE) {
+            pthread_cond_wait(&empty, &mutex);
+        }
+
+        buffer[in] = i;
+        in = (in + 1) % BUFFER_SIZE;
+        count++;
+
+        printf("Produced %d\n", i);
+
+        if (count == BUFFER_SIZE) {
+            printf("Buffer is FULL\n");
+            pthread_cond_signal(&full);
+        }
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    pthread_exit(0);
+}
+
+void *consumer(void *param) {
+    int item;
+
+    while (1) {
+        pthread_mutex_lock(&mutex);
+
+        while (count == 0) {
+            pthread_cond_wait(&full, &mutex);
+        }
+
+        item = buffer[out];
+        out = (out + 1) % BUFFER_SIZE;
+        count--;
+
+        printf("Consumed %d\n", item);
+
+        if (count == 0) {
+            printf("Buffer is EMPTY\n");
+            pthread_cond_signal(&empty);
+        }
+
+        pthread_mutex_unlock(&mutex);
+    }
+}
