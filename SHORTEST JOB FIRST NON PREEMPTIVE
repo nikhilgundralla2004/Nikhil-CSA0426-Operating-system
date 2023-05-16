@@ -1,0 +1,61 @@
+#include <stdio.h>
+
+int main()
+{
+    // Define process burst times
+    int burst_time[] = {6, 8, 7, 3};
+    int num_processes = sizeof(burst_time) / sizeof(burst_time[0]);
+ 
+    // Define completion time, waiting time, and turnaround time
+    int completion_time[num_processes], waiting_time[num_processes], turnaround_time[num_processes];
+ 
+    // Define variables for calculation
+    int i, j, shortest_process, temp;
+    float avg_waiting_time = 0, avg_turnaround_time = 0;
+ 
+    // Set initial values for completion time
+    completion_time[0] = burst_time[0];
+ 
+    // Find completion time for each process
+    for (i = 1; i < num_processes; i++) {
+        shortest_process = i;
+        for (j = 0; j < i; j++) {
+            if (burst_time[j] < burst_time[shortest_process]) {
+                shortest_process = j;
+            }
+        }
+        temp = burst_time[i];
+        burst_time[i] = burst_time[shortest_process];
+        burst_time[shortest_process] = temp;
+ 
+        completion_time[i] = completion_time[i-1] + burst_time[i];
+    }
+ 
+    // Find waiting time for each process
+    for (i = 0; i < num_processes; i++) {
+        waiting_time[i] = completion_time[i] - burst_time[i];
+    }
+ 
+    // Find turnaround time for each process
+    for (i = 0; i < num_processes; i++) {
+        turnaround_time[i] = completion_time[i];
+    }
+ 
+    // Find average waiting time and average turnaround time
+    for (i = 0; i < num_processes; i++) {
+        avg_waiting_time += waiting_time[i];
+        avg_turnaround_time += turnaround_time[i];
+    }
+    avg_waiting_time /= num_processes;
+    avg_turnaround_time /= num_processes;
+ 
+    // Print results
+    printf("Process\tBurst Time\tCompletion Time\tWaiting Time\tTurnaround Time\n");
+    for (i = 0; i < num_processes; i++) {
+        printf("P%d\t\t%d\t\t%d\t\t%d\t\t%d\n", i+1, burst_time[i], completion_time[i], waiting_time[i], turnaround_time[i]);
+    }
+    printf("Average waiting time = %.2f\n", avg_waiting_time);
+    printf("Average turnaround time = %.2f\n", avg_turnaround_time);
+ 
+    return 0;
+}
